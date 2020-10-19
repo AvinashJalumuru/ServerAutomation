@@ -1,0 +1,29 @@
+- name: Add Management Network VM Portgroup to all hosts in a cluster
+  vmware_portgroup:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ hostname }}"
+    switch: "{{ item.vswitch_name }}"
+    portgroup: "{{ item.portgroup_name }}"
+    vlan_id: "{{ item.vlan_id }}"
+    validate_certs: False
+  loop: "{{ host_network_info }}"
+  delegate_to: localhost
+
+- name: Add vSAN vmkernel port
+  vmware_vmkernel:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: "{{ hostname }}"
+    vswitch_name: "{{ item.vswitch_name }}"
+    device: "{{ item.device_name }}"
+    portgroup: "{{ item.portgroup_name }}"
+    network: "{{ item.network }}"
+    state: present
+    enable_vsan: "{{ item.enable_vsan | default(False) }}"
+    enable_vmotion: "{{ item.enable_vmotion | default(False) }}"
+    validate_certs: False
+  loop: "{{ host_network_info }}"
+  delegate_to: localhost

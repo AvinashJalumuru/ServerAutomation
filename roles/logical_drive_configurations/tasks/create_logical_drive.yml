@@ -1,0 +1,22 @@
+  # default raid_level="Raid0" 
+  # default data_drive_count=1
+  # default data_drive_media_type="SSD"
+  # default data_drive_interface_type="SAS"
+  - name: Create Raid Configuration
+    logical_drive_configurations:
+      hostname: "{{ ilo_ip_address }}"
+      username: "{{ ilo_username }}"
+      password: "{{ ilo_password }}"
+      minimum_capacity_gib: "{{ minimum_capacity_gib|int }}"
+      data_drive_count: "{{ data_drive_count | int }}"
+      data_drive_media_type: "{{ data_drive_media_type }}"
+      data_drive_interface_type: "{{ data_drive_interface_type }}"
+      raid_level: "{{ raid_level }}"
+      logical_drive_name: "{{ logical_drive_name }}"
+      #smart_storage_slot_location: "{{ smart_storage_slot_location }}"
+      operation: "createLG"
+    register: logical_drive
+    when:
+      - ilo_ip_address != ""
+    delegate_to: localhost
+

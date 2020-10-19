@@ -1,0 +1,12 @@
+---
+- name: Load variables from vault
+  include_vars: "{{ vault_file }}"
+  when: (vault_file is defined) and (vault_file|length > 0)
+  no_log: true
+
+- include_tasks: create_logical_drive.yml
+  when: operation == "createLG"
+
+
+- include_tasks: delete_logical_drive.yml
+  when: operation == "deleteLG"

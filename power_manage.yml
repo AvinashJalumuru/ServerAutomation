@@ -1,0 +1,20 @@
+- hosts: localhost
+  tasks:
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Validate input parameters
+    fail:
+      msg: "ilo_ip_list is not defined"
+    when: ilo_ip_list is not defined or ilo_ip_list|length == 0
+
+  - name: Set Power state of the iLO Server
+    power_state:
+      hostname: "{{ item }}"
+      username: "{{ ilo_username }}"
+      password: "{{ ilo_password }}"
+      resetType: "{{ power_state }}"
+    delegate_to: localhost   
+    with_items: "{{ ilo_ip_list }}"

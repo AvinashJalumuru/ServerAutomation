@@ -1,0 +1,59 @@
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Validate input parameters
+    fail:
+      msg: "ilo_ip_list is not defined"
+    when: ilo_ip_list is not defined or ilo_ip_list|length == 0
+
+  - name: Mount virtual media
+    mount_virtual_media:
+      hostname: "{{ item }}"
+      username: "{{ ilo_username }}"
+      password: "{{ ilo_password }}"
+      media_url: "{{ iso_url }}"
+    delegate_to: localhost
+    with_items: "{{ ilo_ip_list }}"
+    tags:
+    - install
+
+  - name: Power On the server hardware
+    power_state:
+      hostname: "{{ item }}"
+      username: "{{ ilo_username }}"
+      password: "{{ ilo_password }}"
+      resetType: "reset"
+    delegate_to: localhost   
+    with_items: "{{ ilo_ip_list }}"
+    tags:
+    - install
+
+  - pause:
+      minutes: 15
+    tags:
+    - install
+    - wait
+
+  - network_address_facts:
+      hostname: "{{ item }}"
+      username: "{{ ilo_username }}"
+      password: "{{ ilo_password }}"
+    register: networkFacts
+    delegate_to: localhost
+    until: networkFacts.ip_address is not none
+    with_items: "{{ ilo_ip_list }}"
+    retries: 50
+    delay: 30
+
+  - fail:
+      msg: "Unable to find IP address of baremetal"
+    when: networkFacts.ip_address is none
+
+  - set_fact:
+      ip_addresses: "{{ ip_addresses|default([]) + [item.ip_address] }}"
+    with_items: "{{ networkFacts.results }}"
+
+  - debug:
+      msg: "IP Address of baremetal {{ ip_addresses }}"

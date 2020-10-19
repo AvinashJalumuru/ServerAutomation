@@ -1,0 +1,32 @@
+---
+#
+# Inputs:
+# - host_config: Mapping of hosts, vswitch, vm kernels
+# - vcenter_hostname
+# - vcenter_username
+# - vcenter_password
+#
+# - vault_file
+#
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - include_tasks: network_tasks.yml
+    vars:
+       hostname: "{{ line_item.name }}"
+       host_network_info: "{{ line_item.network_info }}"
+    loop: "{{ host_config }}"
+    loop_control:
+       loop_var: line_item
+    when: dvs_switch is not defined
+
+  - include_tasks: dvs_network_tasks.yml
+    vars:
+       hostname: "{{ line_item.name }}"
+       host_network_info: "{{ line_item.network_info }}"
+    loop: "{{ host_config }}"
+    loop_control:
+       loop_var: line_item
+    when: dvs_switch is defined

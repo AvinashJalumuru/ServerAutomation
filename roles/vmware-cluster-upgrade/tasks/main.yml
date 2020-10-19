@@ -1,0 +1,31 @@
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Scan cluster "{{ cluster_name }}"
+    vlcm_check_compliance:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      cluster_name: "{{ cluster_name }}"
+      validate_certs: False
+    delegate_to: localhost
+
+  - name: Verify compliance cluster "{{ cluster_name }}"
+    vlcm_verify_compliance:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      cluster_name: "{{ cluster_name }}"
+      validate_certs: False
+    delegate_to: localhost
+
+  - name: Remediate cluster "{{ cluster_name }}"
+    vlcm_cluster_remediate:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      cluster_name: "{{ cluster_name }}"
+      validate_certs: False
+    delegate_to: localhost

@@ -1,0 +1,28 @@
+- hosts: localhost
+  tasks:
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Validate input parameters
+    fail:
+      msg: "ilo_ip_list is not defined"
+    when: ilo_ip_list is not defined or ilo_ip_list|length == 0
+
+  - name: Create Raid Configuration
+    logical_drive_configurations:
+      hostname: "{{ item }}"
+      username: "{{ ilo_username }}"
+      password: "{{ ilo_password }}"
+      minimum_capacity_gib: "{{ minimum_capacity_gib|int }}"
+      data_drive_count: "{{ data_drive_count | int }}"
+      data_drive_media_type: "{{ data_drive_media_type }}"
+      data_drive_interface_type: "{{ data_drive_interface_type }}"
+      raid_level: "{{ raid_level }}"
+      logical_drive_name: "{{ logical_drive_name }}"
+      smart_storage_slot_location: "{{ smart_storage_slot_location | default(omit) }}"
+      operation: "createLG"
+    register: logical_drive
+    with_items: "{{ ilo_ip_list }}"
+    delegate_to: localhost

@@ -1,0 +1,18 @@
+---
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Maintenance Mode for host {{ esxi_hostname }} with state {{ state }}
+    vmware_maintenancemode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: "{{ esxi_hostname }}"
+      vsan: "{{ vsan }}"
+      evacuate: "{{ evacuate }}"
+      timeout: "{{ timeout }}"
+      state: "{{ state }}"
+      validate_certs: False
+    delegate_to: localhost

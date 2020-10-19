@@ -1,0 +1,4 @@
+vsan: ensureObjectAccessibility
+evacuate: yes
+timeout: 3600
+state: present

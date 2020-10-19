@@ -1,0 +1,82 @@
+- name: Get physical vNIC info
+  vmware_host_vmnic_info:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    validate_certs: False
+  delegate_to: localhost
+  register: allDvsHosts
+
+- name: Identify used nics
+  set_fact:
+    used_vnics: "{{ allDvsHosts.hosts_vmnics_info[esxi_hostname].used }}"
+
+- set_fact:
+    connected_vnics: "{{ connected_vnics | default([]) + [ item.device]  }}"
+  when: item.status == 'Connected'
+  loop: "{{ allDvsHosts.hosts_vmnics_info[esxi_hostname].vmnic_details }}"
+
+- fail:
+    msg:
+  when: connected_vnics is not defined or connected_vnics|length < 1 
+
+- set_fact:
+    available_vnics: "{{ connected_vnics | intersect(vmnics) | difference(used_vnics | default([]))  }}"
+    assigned_vnics: "{{ connected_vnics | intersect(vmnics) }}"
+
+- fail:
+    msg: "No available NICs to attach to DVS"
+  when: available_vnics is not defined or (available_vnics | length == 0)
+
+- debug:
+     msg: "{{ available_vnics }}"
+
+- name: Add Host to dVS
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    switch_name: "{{ dvs_switch }}"
+    state: present
+    vmnics: "{{ available_vnics }}"
+    validate_certs: False
+  delegate_to: localhost
+  when: esxi_hostname is defined
+
+- name: Migrate Management vmk
+  vmware_migrate_vmk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    device: "{{ vmkernel_device }}"
+    current_switch_name: "{{ std_vswitch }}"
+    current_portgroup_name: "{{ std_pg }}"
+    migrate_switch_name: "{{ dvs_switch }}"
+    migrate_portgroup_name: "{{ dvs_pg }}"
+    validate_certs: False
+  delegate_to: localhost
+
+- name: Remove VMware vSwitch
+  vmware_vswitch:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    validate_certs: False
+    switch: "{{ std_vswitch }}"
+    state: absent
+  delegate_to: localhost
+
+- name: Add other nics to DVS
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    switch_name: "{{ dvs_switch }}"
+    state: present
+    vmnics: "{{ assigned_vnics }}"
+    validate_certs: False

@@ -1,0 +1,21 @@
+---
+#
+# Inputs:
+# - host_config: Mapping of hosts, vswitch, vm kernels
+# - vcenter_hostname
+# - vcenter_username
+# - vcenter_password
+#
+# - vault_file
+#
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - include_tasks: init_host_dvs.yml
+    vars:
+       esxi_hostname: "{{ line_item }}"
+    loop: "{{ esxi_hostnames }}"
+    loop_control:
+       loop_var: line_item

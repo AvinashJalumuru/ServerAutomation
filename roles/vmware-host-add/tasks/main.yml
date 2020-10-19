@@ -1,0 +1,32 @@
+---
+#
+# Inputs:
+# - vcenter_server
+# - vcenter_username
+# - vcenter_password
+# - datacenter_name
+# - cluster_name
+#
+# - esxi_username
+# - esxi_password
+# - ip_addresses  List of ip address
+#
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Add the ESXi host to vCenter with mode {{ state_mode }}
+    vmware_host:
+      hostname: '{{ vcenter_server }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      datacenter_name: "{{ datacenter_name }}"
+      cluster_name: "{{ cluster_name }}"
+      esxi_hostname: "{{ item }}"
+      esxi_username: "{{ esxi_username }}"
+      esxi_password: "{{ esxi_password }}"
+      state: "{{ state_mode }}"
+      validate_certs: False
+    delegate_to: localhost
+    with_items: "{{ ip_addresses }}"

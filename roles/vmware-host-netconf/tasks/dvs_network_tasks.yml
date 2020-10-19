@@ -1,0 +1,17 @@
+---
+- name: Add vSAN vmkernel port
+  vmware_vmkernel:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: "{{ hostname }}"
+    dvswitch_name: "{{ dvs_switch }}"
+    device: "{{ item.device_name }}"
+    portgroup: "{{ item.portgroup_name }}"
+    network: "{{ item.network }}"
+    state: present
+    enable_vsan: "{{ item.enable_vsan | default(False) }}"
+    enable_vmotion: "{{ item.enable_vmotion | default(False) }}"
+    validate_certs: False
+  loop: "{{ host_network_info }}"
+  delegate_to: localhost

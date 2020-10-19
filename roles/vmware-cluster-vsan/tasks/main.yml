@@ -1,0 +1,17 @@
+  - name: Load variables from vault
+    include_vars: "{{ vault_file }}"
+    when: (vault_file is defined) and (vault_file|length > 0)
+    no_log: true
+
+  - name: Configure vSAN Cluster and claim storage automatically
+    vmware_cluster_vsan:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter_name: "{{ datacenter_name }}"
+      cluster_name: "{{ cluster_name }}"
+      enable_vsan: True
+      vsan_auto_claim_storage: "{{ storage_autoclaim }}"
+    delegate_to: localhost
+  
